@@ -17,13 +17,13 @@ export function useLibros(): UseLibrosResult {
   const [intento, setIntento] = useState(0);
 
   const reintentar = useCallback(() => {
+    setCargando(true);
+    setError(null);
     setIntento((actual) => actual + 1);
   }, []);
 
   useEffect(() => {
     let activo = true;
-    setCargando(true);
-    setError(null);
 
     obtenerLibros()
       .then((datos) => {
