@@ -4,13 +4,16 @@ import {
   useCallback,
   useContext,
   useMemo,
+  useEffect,
   useState,
 } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { useLibros } from '../hooks/useLibros';
 import { calcularFechaDevolucion, tieneReserva } from '../lib/reservas';
 import { cancelarRecordatorio } from '../lib/notificaciones';
 import { credencialesValidas } from '../lib/autenticacion';
+import { leerJson, serializarJson } from '../lib/persistencia';
 import { Pila } from '../estructuras/Pila';
 import type {
   Libro,
@@ -50,6 +53,10 @@ type BibliotecaContextValue = {
 const BibliotecaContext = createContext<BibliotecaContextValue | null>(null);
 
 const NOMBRE_USUARIO = 'Lautaro';
+const CLAVE_PRESTAMOS = '@biblioteca/prestamos';
+const CLAVE_ESPERAS = '@biblioteca/esperas';
+const CLAVE_RESERVAS = '@biblioteca/reservas';
+const CLAVE_RECIENTES = '@biblioteca/recientes';
 
 export function BibliotecaProvider({ children }: PropsWithChildren) {
   const { libros, cargando, error, reintentar } = useLibros();
@@ -67,6 +74,67 @@ export function BibliotecaProvider({ children }: PropsWithChildren) {
   const [recientesVersion, setRecientesVersion] = useState(0);
   const [sesionPersonal, setSesionPersonal] = useState(false);
   const [avisos, setAvisos] = useState<string[]>([]);
+  const [persistenciaCargada, setPersistenciaCargada] = useState(false);
+
+  useEffect(() => {
+    let activo = true;
+
+    AsyncStorage.multiGet([
+      CLAVE_PRESTAMOS,
+      CLAVE_ESPERAS,
+      CLAVE_RESERVAS,
+      CLAVE_RECIENTES,
+    ])
+      .then((entradas) => {
+        if (!activo) {
+          return;
+        }
+        const valores = Object.fromEntries(entradas);
+        const prestamosGuardados = leerJson<Prestamo[]>(valores[CLAVE_PRESTAMOS]);
+        const esperasGuardadas = leerJson<Record<string, PersonaEnEspera[]>>(valores[CLAVE_ESPERAS]);
+        const reservasGuardadas = leerJson<ReservaEnEspera[]>(valores[CLAVE_RESERVAS]);
+        const recientesGuardados = leerJson<Libro[]>(valores[CLAVE_RECIENTES]);
+        if (prestamosGuardados) {
+          setPrestamos(prestamosGuardados);
+        }
+        if (esperasGuardadas) {
+          setEsperas(esperasGuardadas);
+        }
+        if (reservasGuardadas) {
+          setReservasEnEspera(reservasGuardadas);
+        }
+        recientesGuardados?.slice().reverse().forEach((libro) => pilaRecientes.apilar(libro));
+      })
+      .catch(() => {
+        if (activo) {
+          setAvisos((actuales) => [...actuales, 'No se pudieron recuperar todos los datos guardados.']);
+        }
+      })
+      .finally(() => {
+        if (activo) {
+          setPersistenciaCargada(true);
+        }
+      });
+
+    return () => {
+      activo = false;
+    };
+  }, [pilaRecientes]);
+
+  useEffect(() => {
+    if (!persistenciaCargada) {
+      return;
+    }
+
+    AsyncStorage.multiSet([
+      [CLAVE_PRESTAMOS, serializarJson(prestamos)],
+      [CLAVE_ESPERAS, serializarJson(esperas)],
+      [CLAVE_RESERVAS, serializarJson(reservasEnEspera)],
+      [CLAVE_RECIENTES, serializarJson(pilaRecientes.aArray())],
+    ]).catch(() => {
+      setAvisos((actuales) => [...actuales, 'No se pudieron guardar los cambios localmente.']);
+    });
+  }, [esperas, persistenciaCargada, pilaRecientes, prestamos, recientesVersion, reservasEnEspera]);
 
   const obtenerDisponibles = useCallback(
     (libro: Libro) => disponibles[libro.isbn] ?? libro.ejemplares,
