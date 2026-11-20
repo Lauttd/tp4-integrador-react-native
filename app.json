@@ -1,7 +1,8 @@
 {
   "expo": {
-    "name": "Tp4-integrador-react",
-    "slug": "Tp4-integrador-react",
+    "name": "Biblioteca IPF",
+    "slug": "biblioteca-ipf",
+    "description": "Catálogo y reservas de la Biblioteca del Instituto Politécnico Formosa.",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",

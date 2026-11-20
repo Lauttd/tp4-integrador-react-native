@@ -118,3 +118,13 @@ Clave: ipf2026
 Las notificaciones locales funcionan en Expo Go; las notificaciones remotas de
 Android requieren un development build. La cámara y el texto nativo de propósito
 deben comprobarse en un dispositivo real.
+
+## Persistencia y datos de demostración
+
+Préstamos, listas de espera, reservas y vistos recientes se guardan localmente
+con AsyncStorage. La primera carga recupera esos datos antes de guardar nuevos
+cambios, evitando reemplazar el estado persistido con valores vacíos.
+
+El catálogo incluye libros con ejemplares disponibles y sin ejemplares. También
+hay listas de espera iniciales para probar el mostrador sin tener que crear
+datos manualmente.
