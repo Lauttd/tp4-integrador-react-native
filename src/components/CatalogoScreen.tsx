@@ -15,6 +15,7 @@ export function CatalogoScreen() {
     reintentar,
     recientes,
     registrarReciente,
+    disponiblesDe,
   } = useBiblioteca();
 
   return (
@@ -70,7 +71,7 @@ export function CatalogoScreen() {
       renderItem={({ item }) => (
         <TarjetaLibro
           libro={item}
-          disponibles={item.ejemplares}
+          disponibles={disponiblesDe(item.isbn)}
           onAbrir={registrarReciente}
         />
       )}

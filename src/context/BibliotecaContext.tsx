@@ -37,6 +37,7 @@ type BibliotecaContextValue = {
   devolver: (isbn: string) => void;
   alternarRecordatorio: (isbn: string, activo: boolean, identificador?: string) => void;
   registrarReciente: (libro: Libro) => void;
+  disponiblesDe: (isbn: string) => number;
   iniciarSesion: (usuario: string, clave: string) => boolean;
   cerrarSesion: () => void;
   entregarAlSiguiente: (isbn: string) => PersonaEnEspera | undefined;
@@ -61,6 +62,14 @@ export function BibliotecaProvider({ children }: PropsWithChildren) {
   const obtenerDisponibles = useCallback(
     (libro: Libro) => disponibles[libro.isbn] ?? libro.ejemplares,
     [disponibles],
+  );
+
+  const disponiblesDe = useCallback(
+    (isbn: string) => {
+      const libro = libros.find((actual) => actual.isbn === isbn);
+      return libro ? obtenerDisponibles(libro) : 0;
+    },
+    [libros, obtenerDisponibles],
   );
 
   const registrarReciente = useCallback(
@@ -191,6 +200,7 @@ export function BibliotecaProvider({ children }: PropsWithChildren) {
       devolver,
       alternarRecordatorio,
       registrarReciente,
+      disponiblesDe,
       iniciarSesion,
       cerrarSesion,
       entregarAlSiguiente,
@@ -200,6 +210,7 @@ export function BibliotecaProvider({ children }: PropsWithChildren) {
       cargando,
       cerrarSesion,
       devolver,
+      disponiblesDe,
       entregarAlSiguiente,
       error,
       esperas,
