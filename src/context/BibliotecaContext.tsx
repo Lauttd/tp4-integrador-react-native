@@ -9,6 +9,7 @@ import {
 
 import { useLibros } from '../hooks/useLibros';
 import { calcularFechaDevolucion, tieneReserva } from '../lib/reservas';
+import { cancelarRecordatorio } from '../lib/notificaciones';
 import { Pila } from '../estructuras/Pila';
 import type {
   Libro,
@@ -34,13 +35,15 @@ type BibliotecaContextValue = {
   recientes: Libro[];
   sesionPersonal: boolean;
   reservar: (isbn: string) => ResultadoReserva;
-  devolver: (isbn: string) => void;
+  devolver: (isbn: string) => Promise<void>;
   alternarRecordatorio: (isbn: string, activo: boolean, identificador?: string) => void;
   registrarReciente: (libro: Libro) => void;
   disponiblesDe: (isbn: string) => number;
   iniciarSesion: (usuario: string, clave: string) => boolean;
   cerrarSesion: () => void;
   entregarAlSiguiente: (isbn: string) => PersonaEnEspera | undefined;
+  avisos: string[];
+  agregarAviso: (aviso: string) => void;
 };
 
 const BibliotecaContext = createContext<BibliotecaContextValue | null>(null);
@@ -58,6 +61,7 @@ export function BibliotecaProvider({ children }: PropsWithChildren) {
   const [pilaRecientes] = useState(() => new Pila<Libro>());
   const [recientesVersion, setRecientesVersion] = useState(0);
   const [sesionPersonal, setSesionPersonal] = useState(false);
+  const [avisos, setAvisos] = useState<string[]>([]);
 
   const obtenerDisponibles = useCallback(
     (libro: Libro) => disponibles[libro.isbn] ?? libro.ejemplares,
@@ -120,8 +124,12 @@ export function BibliotecaProvider({ children }: PropsWithChildren) {
   );
 
   const devolver = useCallback(
-    (isbn: string) => {
-      setPrestamos((actuales) => actuales.filter((prestamo) => prestamo.isbn !== isbn));
+    async (isbn: string) => {
+      const prestamo = prestamos.find((actual) => actual.isbn === isbn);
+      if (prestamo?.identificadorNotificacion) {
+        await cancelarRecordatorio(prestamo.identificadorNotificacion);
+      }
+      setPrestamos((actuales) => actuales.filter((actual) => actual.isbn !== isbn));
       const libro = libros.find((item) => item.isbn === isbn);
       if (libro) {
         setDisponibles((actuales) => ({
@@ -130,7 +138,7 @@ export function BibliotecaProvider({ children }: PropsWithChildren) {
         }));
       }
     },
-    [libros, obtenerDisponibles],
+    [libros, obtenerDisponibles, prestamos],
   );
 
   const alternarRecordatorio = useCallback(
@@ -158,6 +166,10 @@ export function BibliotecaProvider({ children }: PropsWithChildren) {
 
   const cerrarSesion = useCallback(() => {
     setSesionPersonal(false);
+  }, []);
+
+  const agregarAviso = useCallback((aviso: string) => {
+    setAvisos((actuales) => [...actuales, aviso]);
   }, []);
 
   const entregarAlSiguiente = useCallback((isbn: string) => {
@@ -204,9 +216,13 @@ export function BibliotecaProvider({ children }: PropsWithChildren) {
       iniciarSesion,
       cerrarSesion,
       entregarAlSiguiente,
+      avisos,
+      agregarAviso,
     }),
     [
       alternarRecordatorio,
+      avisos,
+      agregarAviso,
       cargando,
       cerrarSesion,
       devolver,
