@@ -115,7 +115,7 @@ Clave: ipf2026
 - `npm run typecheck`: sin errores.
 - `npx expo lint`: sin errores.
 - `npm run doctor`: 20/20 comprobaciones correctas.
-- `npm test -- --runInBand`: 20 pruebas pasando.
+- `npm test -- --runInBand`: 23 pruebas pasando.
 
 Las notificaciones locales funcionan en Expo Go; las notificaciones remotas de
 Android requieren un development build. La cámara y el texto nativo de propósito
