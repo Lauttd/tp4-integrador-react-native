@@ -1,11 +1,21 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 
-import { BibliotecaProvider } from '../context/BibliotecaContext';
+import { BibliotecaProvider, useBiblioteca } from '../context/BibliotecaContext';
 
 export default function RootLayout() {
   return (
     <BibliotecaProvider>
+      <RootStack />
+    </BibliotecaProvider>
+  );
+}
+
+function RootStack() {
+  const { sesionPersonal } = useBiblioteca();
+
+  return (
+    <>
       <StatusBar style="dark" />
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -14,8 +24,14 @@ export default function RootLayout() {
         <Stack.Screen name="escanear" options={{ title: 'Escanear libro' }} />
         <Stack.Screen name="reservar/[isbn]" options={{ presentation: 'modal', title: 'Reservar' }} />
         <Stack.Screen name="personal" options={{ title: 'Personal' }} />
+        <Stack.Protected guard={!sesionPersonal} redirectTo="/login">
+          <Stack.Screen name="login" options={{ presentation: 'modal', title: 'Ingreso de personal' }} />
+        </Stack.Protected>
+        <Stack.Protected guard={sesionPersonal} redirectTo="/">
+          <Stack.Screen name="mostrador" options={{ title: 'Mostrador' }} />
+        </Stack.Protected>
         <Stack.Screen name="+not-found" options={{ title: 'Página no encontrada' }} />
       </Stack>
-    </BibliotecaProvider>
+    </>
   );
 }

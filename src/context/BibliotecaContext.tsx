@@ -10,6 +10,7 @@ import {
 import { useLibros } from '../hooks/useLibros';
 import { calcularFechaDevolucion, tieneReserva } from '../lib/reservas';
 import { cancelarRecordatorio } from '../lib/notificaciones';
+import { credencialesValidas } from '../lib/autenticacion';
 import { Pila } from '../estructuras/Pila';
 import type {
   Libro,
@@ -48,8 +49,6 @@ type BibliotecaContextValue = {
 
 const BibliotecaContext = createContext<BibliotecaContextValue | null>(null);
 
-const USUARIO = 'bibliotecario';
-const CLAVE = 'ipf2026';
 const NOMBRE_USUARIO = 'Lautaro';
 
 export function BibliotecaProvider({ children }: PropsWithChildren) {
@@ -57,7 +56,13 @@ export function BibliotecaProvider({ children }: PropsWithChildren) {
   const [disponibles, setDisponibles] = useState<Record<string, number>>({});
   const [prestamos, setPrestamos] = useState<Prestamo[]>([]);
   const [reservasEnEspera, setReservasEnEspera] = useState<ReservaEnEspera[]>([]);
-  const [esperas, setEsperas] = useState<Record<string, PersonaEnEspera[]>>({});
+  const [esperas, setEsperas] = useState<Record<string, PersonaEnEspera[]>>({
+    '9788420633137': [{ id: 'inicial-ficciones-1', nombre: 'Ana' }],
+    '9789500420749': [
+      { id: 'inicial-rayuela-1', nombre: NOMBRE_USUARIO },
+      { id: 'inicial-rayuela-2', nombre: 'Beto' },
+    ],
+  });
   const [pilaRecientes] = useState(() => new Pila<Libro>());
   const [recientesVersion, setRecientesVersion] = useState(0);
   const [sesionPersonal, setSesionPersonal] = useState(false);
@@ -159,7 +164,7 @@ export function BibliotecaProvider({ children }: PropsWithChildren) {
   );
 
   const iniciarSesion = useCallback((usuario: string, clave: string) => {
-    const valido = usuario === USUARIO && clave === CLAVE;
+    const valido = credencialesValidas(usuario, clave);
     setSesionPersonal(valido);
     return valido;
   }, []);
