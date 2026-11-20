@@ -7,4 +7,8 @@ describe('estados de permisos', () => {
     expect(estadoPermiso({ granted: false, canAskAgain: true })).toBe('preguntable');
     expect(estadoPermiso({ granted: false, canAskAgain: false })).toBe('bloqueado');
   });
+
+  it('prioriza concedido aunque el sistema permita volver a preguntar', () => {
+    expect(estadoPermiso({ granted: true, canAskAgain: false })).toBe('concedido');
+  });
 });

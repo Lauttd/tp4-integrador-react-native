@@ -7,6 +7,12 @@ describe('reglas de reservas', () => {
     );
   });
 
+  it('calcula correctamente al cambiar de mes', () => {
+    expect(calcularFechaDevolucion(new Date('2026-12-28T12:00:00.000Z'))).toBe(
+      '04/01/2027',
+    );
+  });
+
   it('detecta que una persona ya reservó un libro', () => {
     expect(
       tieneReserva(

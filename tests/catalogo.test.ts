@@ -10,5 +10,6 @@ describe('validación del catálogo', () => {
   it('normaliza la consulta del buscador', () => {
     expect(normalizarConsulta('  Borges  ')).toBe('Borges');
     expect(normalizarConsulta(undefined)).toBe('');
+    expect(normalizarConsulta(['  Cortázar  ', 'otra consulta'])).toBe('Cortázar');
   });
 });
