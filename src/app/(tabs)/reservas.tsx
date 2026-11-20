@@ -24,26 +24,29 @@ export default function ReservasRoute() {
     }
 
     setProcesando(isbn);
-    if (!activo) {
-      if (prestamo.identificadorNotificacion) {
-        await cancelarRecordatorio(prestamo.identificadorNotificacion);
+    try {
+      if (!activo) {
+        if (prestamo.identificadorNotificacion) {
+          await cancelarRecordatorio(prestamo.identificadorNotificacion);
+        }
+        alternarRecordatorio(isbn, false);
+        return;
       }
-      alternarRecordatorio(isbn, false);
-      setProcesando(null);
-      return;
-    }
 
-    const permitido = await pedirPermisoNotificaciones();
-    if (!permitido) {
-      agregarAviso(`No se activó el recordatorio de ${libros.find((libro) => libro.isbn === isbn)?.titulo ?? isbn}.`);
-      setProcesando(null);
-      return;
-    }
+      const permitido = await pedirPermisoNotificaciones();
+      if (!permitido) {
+        agregarAviso(`No se activó el recordatorio de ${libros.find((libro) => libro.isbn === isbn)?.titulo ?? isbn}.`);
+        return;
+      }
 
-    const titulo = libros.find((libro) => libro.isbn === isbn)?.titulo ?? isbn;
-    const identificador = await programarRecordatorio(titulo);
-    alternarRecordatorio(isbn, true, identificador);
-    setProcesando(null);
+      const titulo = libros.find((libro) => libro.isbn === isbn)?.titulo ?? isbn;
+      const identificador = await programarRecordatorio(titulo);
+      alternarRecordatorio(isbn, true, identificador);
+    } catch {
+      agregarAviso('No se pudo activar el recordatorio. Podés seguir usando la app sin notificaciones.');
+    } finally {
+      setProcesando(null);
+    }
   };
 
   return (
