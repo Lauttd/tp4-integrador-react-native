@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Link, Stack, useLocalSearchParams, router } from 'expo-router';
 
@@ -9,6 +10,7 @@ export default function ReservarRoute() {
   const { isbn } = useLocalSearchParams<{ isbn: string }>();
   const { libros, disponiblesDe, reservar } = useBiblioteca();
   const libro = esIsbnValido(isbn) ? libros.find((actual) => actual.isbn === isbn) : undefined;
+  const [mensaje, setMensaje] = useState('');
 
   return (
     <>
@@ -26,11 +28,20 @@ export default function ReservarRoute() {
               accessibilityRole="button"
               style={styles.boton}
               onPress={() => {
-                reservar(libro.isbn);
+                const resultado = reservar(libro.isbn);
+                if (resultado.tipo === 'duplicada') {
+                  setMensaje('Ya tenés una reserva para este libro.');
+                  return;
+                }
+                if (resultado.tipo === 'inexistente') {
+                  setMensaje('El libro ya no está disponible en el catálogo.');
+                  return;
+                }
                 router.replace('/reservas');
               }}>
               <Text style={styles.textoBoton}>Confirmar</Text>
             </Pressable>
+            {mensaje && <Text style={styles.error}>{mensaje}</Text>}
           </>
         ) : (
           <>
@@ -71,6 +82,9 @@ const styles = StyleSheet.create({
   textoBoton: {
     color: tema.colores.superficie,
     fontWeight: '700',
+  },
+  error: {
+    color: tema.colores.error,
   },
   link: {
     color: tema.colores.primario,
